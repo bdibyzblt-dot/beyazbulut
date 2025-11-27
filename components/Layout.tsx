@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Cloud, Menu, X, User, ChevronDown, LogOut } from 'lucide-react';
 import { getCategories } from '../services/poemService';
 import { getSettings } from '../services/settingsService';
-import { getPublicUser, signOutPublic } from '../services/authService';
+import { getPublicUser, signOutPublic, isAuthenticated } from '../services/authService';
 import { Category, SiteSettings, UserProfile } from '../types';
 import SeoMeta from './SeoMeta';
 
@@ -16,6 +16,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [publicUser, setPublicUser] = useState<UserProfile | null>(null);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   
   const [settings, setSettings] = useState<SiteSettings>({
       siteName: "BEYAZBULUT",
@@ -43,6 +44,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       setCategories(cats);
       setSettings(s);
       setPublicUser(u);
+      setIsAdminLoggedIn(isAuthenticated());
     };
     init();
   }, [location]);
@@ -100,9 +102,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             <Link to="/about" className={`text-xs tracking-[0.2em] uppercase transition-all duration-300 hover:text-accent ${location.pathname === '/about' ? 'text-accent font-bold' : 'text-stone-500'}`}>Hakkımızda</Link>
             
+            {/* Admin Link: Only visible if Admin is logged in via Admin Auth, NOT public auth */}
+            {isAdminLoggedIn && (
+               <Link to="/admin" className={`text-xs tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-500 ${location.pathname.startsWith('/admin') ? 'text-red-500 font-bold' : 'text-stone-400'}`}>Yönetici</Link>
+            )}
+
             {publicUser ? (
-              <div className="relative group h-full flex items-center">
-                 <button className="flex items-center gap-2 text-stone-600 hover:text-accent font-serif text-sm">
+              <div className="relative group h-full flex items-center ml-4">
+                 <button className="flex items-center gap-2 text-stone-600 hover:text-accent font-serif text-sm border-l border-secondary/20 pl-4 h-8">
                     <User size={16} /> {publicUser.username}
                  </button>
                  <div className="absolute top-[90%] right-0 pt-4 hidden group-hover:block w-48 animate-fade-in z-50">
@@ -166,7 +173,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
 
             <Link to="/about" onClick={closeMenu} className="text-2xl font-serif text-ink hover:text-accent py-2 border-b border-secondary/20">Hakkımızda</Link>
-            <Link to="/admin" onClick={closeMenu} className="text-lg font-serif text-stone-400 hover:text-accent py-2 pt-10">Yönetici Paneli</Link>
+            
+            {/* Mobile Admin Link: Only if Admin Logged In */}
+            {isAdminLoggedIn && (
+              <Link to="/admin" onClick={closeMenu} className="text-lg font-serif text-red-400 hover:text-red-500 py-2 pt-10">Yönetici Paneli</Link>
+            )}
           </nav>
         </div>
       )}

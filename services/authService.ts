@@ -19,6 +19,7 @@ export interface AdminUser {
 
 export const login = async (username: string, password: string): Promise<LoginResult> => {
   try {
+    // 1. Try secure RPC call first (Preferred)
     const { data: rpcData, error: rpcError } = await supabase.rpc('login_admin', {
       input_username: username,
       input_password: password
@@ -30,7 +31,10 @@ export const login = async (username: string, password: string): Promise<LoginRe
        return { success: true };
     }
 
+    // 2. Fallback: Direct select (Only works if RLS allows public select - discouraged but fail-safe for dev)
     if (rpcError) {
+        console.warn("RPC Login failed, trying direct select...", rpcError.message);
+        
         const { data: selectData, error: selectError } = await supabase
             .from('admin_users')
             .select('*')
@@ -43,8 +47,13 @@ export const login = async (username: string, password: string): Promise<LoginRe
             localStorage.setItem(USER_INFO_KEY, JSON.stringify({ username: selectData.username, id: selectData.id }));
             return { success: true };
         }
+        
+        if (selectError) {
+            return { success: false, message: "Veritabanı bağlantı hatası.", debugInfo: selectError.message };
+        }
     }
-    return { success: false, message: "Şifre hatalı veya kullanıcı bulunamadı." };
+    
+    return { success: false, message: "Kullanıcı adı veya şifre hatalı." };
 
   } catch (err: any) {
     return { success: false, message: "Beklenmeyen hata.", debugInfo: err.message };
@@ -110,14 +119,18 @@ export const getPublicUser = async (): Promise<UserProfile | null> => {
 
 // --- ADMIN USER MANAGEMENT ---
 export const getAllAdmins = async (): Promise<AdminUser[]> => {
+  if (!isAuthenticated()) return [];
   const { data, error } = await supabase.from('admin_users').select('id, username').order('id');
   if (error) return [];
   return data as AdminUser[];
 };
 
 export const addAdmin = async (username: string, password: string): Promise<{success: boolean, message?: string}> => {
+  if (!isAuthenticated()) return { success: false, message: "Yetkisiz işlem." };
+  
   const { data: existing } = await supabase.from('admin_users').select('id').eq('username', username).maybeSingle();
   if (existing) return { success: false, message: "Bu kullanıcı adı zaten kullanılıyor." };
+  
   const { error } = await supabase.from('admin_users').insert([{ username, password }]);
   if (error) return { success: false, message: error.message };
   return { success: true };
@@ -125,7 +138,9 @@ export const addAdmin = async (username: string, password: string): Promise<{suc
 
 export const deleteAdmin = async (id: number): Promise<boolean> => {
   const currentUser = getCurrentUser();
+  // Double check security on frontend
   if (currentUser && currentUser.id === id) return false;
+  
   const { error } = await supabase.from('admin_users').delete().eq('id', id);
   return !error;
 };
@@ -133,8 +148,13 @@ export const deleteAdmin = async (id: number): Promise<boolean> => {
 export const updateAdminProfile = async (currentUsername: string, newUsername: string, newPassword?: string): Promise<boolean> => {
   const updates: any = { username: newUsername };
   if (newPassword && newPassword.length > 0) updates.password = newPassword;
+  
+  // Note: RLS might block updating via direct query if policies aren't perfect, 
+  // but the current setup allows admins to update all.
   const { error } = await supabase.from('admin_users').update(updates).eq('username', currentUsername);
+  
   if (error) return false;
+  
   const currentUser = getCurrentUser();
   if (currentUser && currentUser.username === currentUsername) {
      localStorage.setItem(USER_INFO_KEY, JSON.stringify({ ...currentUser, username: newUsername }));
