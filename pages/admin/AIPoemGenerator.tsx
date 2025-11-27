@@ -24,6 +24,7 @@ const AIPoemGenerator: React.FC = () => {
   const [finalTitle, setFinalTitle] = useState('');
   const [finalContent, setFinalContent] = useState('');
   const [finalCategory, setFinalCategory] = useState('');
+  const [finalAuthor, setFinalAuthor] = useState('Yapay Zeka (Gemini)');
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -77,6 +78,7 @@ const AIPoemGenerator: React.FC = () => {
       setFinalContent(result.content);
       // If user typed a prompt, we stick to selected category for saving, or user can change it
       setFinalCategory(selectedCategory);
+      setFinalAuthor('Yapay Zeka (Gemini)');
     } else {
       alert("Şiir oluşturulamadı. Lütfen tekrar deneyin veya API anahtarınızı kontrol edin.");
     }
@@ -89,7 +91,7 @@ const AIPoemGenerator: React.FC = () => {
       id: Date.now().toString(),
       title: finalTitle,
       content: finalContent,
-      author: 'Yapay Zeka (Gemini)',
+      author: finalAuthor || 'Yapay Zeka (Gemini)',
       category: finalCategory,
       likes: 0,
       date: new Date().toLocaleDateString('tr-TR')
@@ -203,6 +205,18 @@ const AIPoemGenerator: React.FC = () => {
                       className="w-full p-2 font-serif text-xl text-ink bg-transparent border-b border-secondary/30 focus:border-accent outline-none"
                     />
                   </div>
+
+                  <div>
+                    <label className="text-[10px] text-stone-400 uppercase">Şair</label>
+                    <input 
+                      type="text" 
+                      value={finalAuthor}
+                      onChange={(e) => setFinalAuthor(e.target.value)}
+                      placeholder="Şair adı girin"
+                      className="w-full p-2 font-serif text-base text-ink bg-transparent border-b border-secondary/30 focus:border-accent outline-none"
+                    />
+                  </div>
+
                   <div>
                      <label className="text-[10px] text-stone-400 uppercase">İçerik</label>
                      <textarea 
