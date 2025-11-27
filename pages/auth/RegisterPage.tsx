@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Lock, Mail, Loader2, ArrowRight } from 'lucide-react';
@@ -42,10 +43,10 @@ const RegisterPage: React.FC = () => {
 
     if (res.success) {
       if (res.session) {
-        // Auto login successful (Email confirmation is OFF)
+        // Auto login successful (Email confirmation is OFF in Supabase)
         navigate('/');
       } else {
-        // Email confirmation is ON
+        // Email confirmation is ON in Supabase
         alert("Kayıt başarılı! Lütfen e-posta adresinize gelen onay bağlantısına tıklayın, ardından giriş yapın.");
         navigate('/login');
       }

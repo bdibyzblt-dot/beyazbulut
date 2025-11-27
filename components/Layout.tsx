@@ -102,7 +102,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             <Link to="/about" className={`text-xs tracking-[0.2em] uppercase transition-all duration-300 hover:text-accent ${location.pathname === '/about' ? 'text-accent font-bold' : 'text-stone-500'}`}>Hakkımızda</Link>
             
-            {/* Admin Link: Only visible if Admin is logged in via Admin Auth, NOT public auth */}
+            {/* Admin Link: Only visible if Admin is logged in via Admin Auth */}
             {isAdminLoggedIn && (
                <Link to="/admin" className={`text-xs tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-500 ${location.pathname.startsWith('/admin') ? 'text-red-500 font-bold' : 'text-stone-400'}`}>Yönetici</Link>
             )}
@@ -122,10 +122,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                  </div>
               </div>
             ) : (
-              <div className="flex items-center gap-4 border-l border-secondary/20 pl-6">
-                <Link to="/login" className="text-xs font-bold uppercase tracking-wider text-ink hover:text-accent transition-colors">Giriş Yap</Link>
-                <Link to="/register" className="bg-accent text-white px-4 py-2 rounded-sm text-xs font-bold uppercase tracking-wider hover:bg-blue-300 transition-colors">Üye Ol</Link>
-              </div>
+              // Hide Public Auth buttons if Admin is logged in
+              !isAdminLoggedIn && (
+                <div className="flex items-center gap-4 border-l border-secondary/20 pl-6">
+                  <Link to="/login" className="text-xs font-bold uppercase tracking-wider text-ink hover:text-accent transition-colors">Giriş Yap</Link>
+                  <Link to="/register" className="bg-accent text-white px-4 py-2 rounded-sm text-xs font-bold uppercase tracking-wider hover:bg-blue-300 transition-colors">Üye Ol</Link>
+                </div>
+              )
             )}
           </nav>
 
@@ -148,10 +151,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <button onClick={handleSignOut} className="text-sm text-red-500 mt-2 font-bold uppercase">Çıkış Yap</button>
                </div>
              ) : (
-               <div className="flex flex-col gap-4 border-b border-secondary/20 pb-6 mb-4">
-                  <Link to="/login" onClick={closeMenu} className="bg-white border border-secondary/20 py-3 text-ink font-bold uppercase text-sm rounded-sm">Giriş Yap</Link>
-                  <Link to="/register" onClick={closeMenu} className="bg-accent text-white py-3 font-bold uppercase text-sm rounded-sm">Üye Ol</Link>
-               </div>
+               // Hide Public Auth buttons if Admin is logged in
+               !isAdminLoggedIn && (
+                 <div className="flex flex-col gap-4 border-b border-secondary/20 pb-6 mb-4">
+                    <Link to="/login" onClick={closeMenu} className="bg-white border border-secondary/20 py-3 text-ink font-bold uppercase text-sm rounded-sm">Giriş Yap</Link>
+                    <Link to="/register" onClick={closeMenu} className="bg-accent text-white py-3 font-bold uppercase text-sm rounded-sm">Üye Ol</Link>
+                 </div>
+               )
              )}
           
             <Link to="/" onClick={closeMenu} className="text-2xl font-serif text-ink hover:text-accent py-2 border-b border-secondary/20">Ana Sayfa</Link>
