@@ -1,4 +1,3 @@
-
 import { supabase } from './supabaseClient';
 import { UserProfile } from '../types';
 
@@ -76,7 +75,7 @@ export const getCurrentUser = () => {
 
 // --- PUBLIC AUTH (Supabase Native) ---
 
-export const signUpPublic = async (email: string, password: string, fullName: string, username: string): Promise<{success: boolean, message?: string}> => {
+export const signUpPublic = async (email: string, password: string, fullName: string, username: string): Promise<{success: boolean, message?: string, session?: any}> => {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -89,7 +88,9 @@ export const signUpPublic = async (email: string, password: string, fullName: st
   });
 
   if (error) return { success: false, message: error.message };
-  return { success: true };
+  
+  // If email confirmation is disabled in Supabase, data.session will be present immediately.
+  return { success: true, session: data.session };
 };
 
 export const signInPublic = async (email: string, password: string): Promise<{success: boolean, message?: string}> => {

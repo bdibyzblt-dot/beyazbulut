@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Lock, Mail, Loader2, ArrowRight } from 'lucide-react';
@@ -42,8 +41,14 @@ const RegisterPage: React.FC = () => {
     setIsLoading(false);
 
     if (res.success) {
-      alert("Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz.");
-      navigate('/login');
+      if (res.session) {
+        // Auto login successful (Email confirmation is OFF)
+        navigate('/');
+      } else {
+        // Email confirmation is ON
+        alert("Kayıt başarılı! Lütfen e-posta adresinize gelen onay bağlantısına tıklayın, ardından giriş yapın.");
+        navigate('/login');
+      }
     } else {
       setError(res.message || 'Kayıt sırasında bir hata oluştu.');
     }
