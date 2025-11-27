@@ -5,6 +5,7 @@ import { UserProfile } from '../types';
 // --- ADMIN AUTH (Custom Table) ---
 const AUTH_KEY = 'beyazbulut_auth_token';
 const USER_INFO_KEY = 'beyazbulut_admin_user';
+const ADMIN_EVENT_KEY = 'admin-auth-change'; // Custom event name
 
 interface LoginResult {
   success: boolean;
@@ -17,6 +18,11 @@ export interface AdminUser {
   username: string;
 }
 
+// Helper to notify app about auth changes
+const notifyAuthChange = () => {
+  window.dispatchEvent(new Event(ADMIN_EVENT_KEY));
+};
+
 export const login = async (username: string, password: string): Promise<LoginResult> => {
   try {
     // 1. Try secure RPC call first (Preferred)
@@ -28,6 +34,7 @@ export const login = async (username: string, password: string): Promise<LoginRe
     if (!rpcError && rpcData && rpcData.success) {
        localStorage.setItem(AUTH_KEY, 'true');
        localStorage.setItem(USER_INFO_KEY, JSON.stringify({ username: rpcData.username, id: rpcData.id }));
+       notifyAuthChange(); // Notify Layout
        return { success: true };
     }
 
@@ -45,6 +52,7 @@ export const login = async (username: string, password: string): Promise<LoginRe
         if (!selectError && selectData) {
             localStorage.setItem(AUTH_KEY, 'true');
             localStorage.setItem(USER_INFO_KEY, JSON.stringify({ username: selectData.username, id: selectData.id }));
+            notifyAuthChange(); // Notify Layout
             return { success: true };
         }
         
@@ -63,6 +71,7 @@ export const login = async (username: string, password: string): Promise<LoginRe
 export const logout = () => {
   localStorage.removeItem(AUTH_KEY);
   localStorage.removeItem(USER_INFO_KEY);
+  notifyAuthChange(); // Notify Layout
 };
 
 export const isAuthenticated = (): boolean => {

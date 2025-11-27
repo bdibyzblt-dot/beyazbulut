@@ -5,6 +5,7 @@ import { Cloud, Menu, X, User, ChevronDown, LogOut } from 'lucide-react';
 import { getCategories } from '../services/poemService';
 import { getSettings } from '../services/settingsService';
 import { getPublicUser, signOutPublic, isAuthenticated } from '../services/authService';
+import { supabase } from '../services/supabaseClient'; // Direct import for auth listener
 import { Category, SiteSettings, UserProfile } from '../types';
 import SeoMeta from './SeoMeta';
 
@@ -34,20 +35,63 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Initial Data Load (Settings, Categories)
   useEffect(() => {
     const init = async () => {
-      const [cats, s, u] = await Promise.all([
+      const [cats, s] = await Promise.all([
           getCategories(),
           getSettings(),
-          getPublicUser()
       ]);
       setCategories(cats);
       setSettings(s);
-      setPublicUser(u);
-      setIsAdminLoggedIn(isAuthenticated());
     };
     init();
   }, [location]);
+
+  // Admin Auth Listener (Responsive Update)
+  useEffect(() => {
+    const checkAdminAuth = () => {
+       setIsAdminLoggedIn(isAuthenticated());
+    };
+    
+    // Check initially
+    checkAdminAuth();
+
+    // Listen for custom event from authService
+    window.addEventListener('admin-auth-change', checkAdminAuth);
+    
+    return () => {
+       window.removeEventListener('admin-auth-change', checkAdminAuth);
+    };
+  }, []);
+
+  // Public User Auth Listener (Supabase Realtime)
+  useEffect(() => {
+    const checkPublicUser = async () => {
+       const u = await getPublicUser();
+       setPublicUser(u);
+    };
+
+    checkPublicUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+       if (session?.user) {
+          setPublicUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            username: session.user.user_metadata?.username || 'Kullanıcı',
+            fullName: session.user.user_metadata?.full_name || ''
+          });
+       } else {
+          setPublicUser(null);
+       }
+    });
+
+    return () => {
+       subscription.unsubscribe();
+    };
+  }, []);
+
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
